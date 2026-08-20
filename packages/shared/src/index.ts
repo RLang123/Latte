@@ -1,7 +1,10 @@
 export type Direction = 'up' | 'down' | 'left' | 'right';
 export type Role = 'guide' | 'runner';
-export type GameMode = 'maze' | 'draw';
-export type Phase = 'selecting' | 'intro' | 'playing' | 'success' | 'drawing' | 'revealed' | 'disconnected';
+export type GameMode = 'maze' | 'draw' | 'world';
+export type WorldRegion = 'east-asia' | 'south-asia' | 'central-eurasia' | 'africa' | 'americas';
+export type WorldGame = 'yut-nori' | 'pachisi-duel' | 'assyk-aim' | 'oware' | 'loteria-duo';
+export type WorldStage = 'vote' | 'reveal' | 'ready' | 'playing' | 'finished';
+export type Phase = 'selecting' | 'intro' | 'playing' | 'success' | 'drawing' | 'revealed' | 'world' | 'disconnected';
 export type Position = { x: number; y: number };
 export type Cell = { n: boolean; e: boolean; s: boolean; w: boolean };
 export type Maze = { width: number; height: number; cells: Cell[][]; start: Position; exit: Position; seed: number };
@@ -15,7 +18,10 @@ export type MatchState = {
   finalMessages: Partial<Record<Role, SafeMessage>>;
   topic?: string; drawEndsAt?: number; submitted?: boolean;
   drawings?: Partial<Record<Role, string>>; reactions?: Partial<Record<Role, DrawReaction>>;
+  worldStage?: WorldStage; worldRegion?: WorldRegion; worldGame?: WorldGame; worldEndsAt?: number;
+  worldVoted?: boolean; worldReady?: boolean; worldChoices?: [WorldRegion?, WorldRegion?]; worldData?: WorldData; worldWinner?: Role | 'draw';
 };
+export type WorldData = { turn: Role; scores: [number, number]; board: number[]; shared: number[]; goal: number; lastAction?: string; lastResult?: string };
 
 export interface ServerToClientEvents {
   stats: (stats: PublicStats) => void;
@@ -37,6 +43,11 @@ export interface ClientToServerEvents {
   submitDrawing: (payload: { image: string }) => void;
   reactDrawing: (payload: { reaction: DrawReaction }) => void;
   drawAgain: () => void;
+  voteRegion: (payload: { region: WorldRegion }) => void;
+  worldReady: () => void;
+  worldAction: (payload: { action: string; value?: number }) => void;
+  travelAgain: () => void;
+  chooseAnotherGame: () => void;
 }
 
 export const DIRECTIONS: Direction[] = ['up', 'down', 'left', 'right'];
@@ -44,7 +55,9 @@ export const SAFE_MESSAGES: SafeMessage[] = ['thank-you', 'that-was-fun', 'we-ma
 export const DRAW_REACTIONS: DrawReaction[] = ['✦', '♡', '☀', '!', '?'];
 export const isDirection = (v: unknown): v is Direction => typeof v === 'string' && DIRECTIONS.includes(v as Direction);
 export const isSafeMessage = (v: unknown): v is SafeMessage => typeof v === 'string' && SAFE_MESSAGES.includes(v as SafeMessage);
-export const isGameMode = (v: unknown): v is GameMode => v === 'maze' || v === 'draw';
+export const WORLD_REGIONS: WorldRegion[] = ['east-asia', 'south-asia', 'central-eurasia', 'africa', 'americas'];
+export const isGameMode = (v: unknown): v is GameMode => v === 'maze' || v === 'draw' || v === 'world';
+export const isWorldRegion = (v: unknown): v is WorldRegion => typeof v === 'string' && WORLD_REGIONS.includes(v as WorldRegion);
 export const isDrawReaction = (v: unknown): v is DrawReaction => typeof v === 'string' && DRAW_REACTIONS.includes(v as DrawReaction);
 export * from './countries.js';
 export * from './maze.js';

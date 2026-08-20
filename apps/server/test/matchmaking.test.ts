@@ -43,4 +43,18 @@ describe('matchmaking', () => {
     const reaction = eventWhere<any>(b, 'state', s => s.phase === 'revealed' && s.reactions?.[matchA.role] === '✦'); a.emit('reactDrawing', { reaction: '✦' }); expect((await reaction).reactions[matchA.role]).toBe('✦');
     const next = eventWhere<any>(a, 'state', s => s.phase === 'drawing'); a.emit('drawAgain'); expect((await next).topic).not.toBe(ra.topic); const disconnected = event(b, 'peerDisconnected'); a.disconnect(); await disconnected; b.disconnect(); expect(game!.rooms.size).toBe(0);
   }, 20000);
+
+  it('runs private region voting and a server-authoritative world round', async () => {
+    server = http.createServer(); game = new GameServer(server); await new Promise<void>(r => server!.listen(0, '127.0.0.1', r));
+    const { a, b } = await pair((server.address() as any).port);
+    const worldA = eventWhere<any>(a, 'state', s => s.mode === 'world' && s.worldStage === 'vote');
+    const worldB = eventWhere<any>(b, 'state', s => s.mode === 'world' && s.worldStage === 'vote');
+    a.emit('selectGame', { mode: 'world' }); b.emit('selectGame', { mode: 'world' }); await Promise.all([worldA, worldB]);
+    const aVoted = eventWhere<any>(a, 'state', s => s.worldStage === 'vote' && s.worldVoted); a.emit('voteRegion', { region: 'africa' }); expect((await aVoted).worldRegion).toBeUndefined();
+    const bResult = eventWhere<any>(b, 'state', s => s.worldStage === 'reveal'); b.emit('voteRegion', { region: 'africa' }); const result = await bResult; expect(result.worldRegion).toBe('africa'); expect(result.worldGame).toBe('oware'); expect(result.worldVoted).toBe(true);
+    const readyA = eventWhere<any>(a, 'state', s => s.worldStage === 'ready'); const readyB = eventWhere<any>(b, 'state', s => s.worldStage === 'ready'); await Promise.all([readyA, readyB]);
+    const playing = eventWhere<any>(a, 'state', s => s.worldStage === 'playing'); a.emit('worldReady'); b.emit('worldReady'); const started = await playing; expect(started.worldData.turn).toBe('guide');
+    const guide = started.role === 'guide' ? a : b; const runner = started.role === 'guide' ? b : a; const next = eventWhere<any>(runner, 'state', s => s.worldData?.lastAction === 'sow'); guide.emit('worldAction', { action: 'sow', value: 0 }); expect((await next).worldData.lastAction).toBe('sow');
+    guide.emit('voteRegion', { region: 'americas' }); await new Promise(r => setTimeout(r, 100)); expect(game!.rooms.size).toBe(1); a.disconnect(); b.disconnect();
+  }, 20000);
 });
