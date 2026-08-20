@@ -1,0 +1,20 @@
+{
+  "name": "without-words",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run build -w @without-words/shared && npm run dev -w @without-words/server",
+    "build": "npm run build -w @without-words/shared && npm run build -w @without-words/client && npm run build -w @without-words/server",
+    "test": "npm run test -w @without-words/shared && npm run test -w @without-words/server",
+    "typecheck": "npm run typecheck -w @without-words/shared && npm run typecheck -w @without-words/client && npm run typecheck -w @without-words/server",
+    "e2e": "node scripts/browser-e2e.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.1",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

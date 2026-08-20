@@ -1,0 +1,29 @@
+import type { Server as HttpServer } from 'node:http';
+import { Server, type Socket } from 'socket.io';
+import { countryByCode, distanceKm, generateMaze, movePosition, isDirection, isSafeMessage, type ClientToServerEvents, type Country, type MatchState, type Role, type ServerToClientEvents } from '@without-words/shared';
+
+type GameSocket=Socket<ClientToServerEvents,ServerToClientEvents>;
+type Waiting={socketId:string;country:Country;joinedAt:number};
+type Room={id:string;players:Record<Role,{socketId:string;country:Country}>;state:MatchState;lastMove:number;lastSignal:number};
+
+export class GameServer{
+  io:Server<ClientToServerEvents,ServerToClientEvents>; waiting:Waiting[]=[]; rooms=new Map<string,Room>(); socketRooms=new Map<string,string>(); socketCountries=new Map<string,Country>(); completedToday=0; private roomNo=0;
+  constructor(server:HttpServer){this.io=new Server(server,{cors:{origin:true,credentials:false}});this.io.on('connection',s=>this.connect(s));}
+  stats(){return{waiting:this.waiting.length,completedToday:this.completedToday}}
+  private broadcastStats(){this.io.emit('stats',this.stats())}
+  private connect(socket:GameSocket){socket.emit('stats',this.stats());socket.on('joinQueue',p=>this.join(socket,p));socket.on('leaveQueue',()=>this.leaveQueue(socket.id));socket.on('move',p=>this.move(socket,p));socket.on('signal',p=>this.signal(socket,p));socket.on('finalMessage',p=>this.final(socket,p));socket.on('replay',()=>this.replay(socket));socket.on('disconnect',()=>this.disconnect(socket));}
+  private join(socket:GameSocket,p:{countryCode:string}){if(this.socketRooms.has(socket.id)||this.waiting.some(w=>w.socketId===socket.id))return;const country=typeof p?.countryCode==='string'&&countryByCode(p.countryCode);if(!country){socket.emit('errorMessage','Choose a valid country.');return}this.socketCountries.set(socket.id,country);this.waiting.push({socketId:socket.id,country,joinedAt:Date.now()});socket.emit('waiting');this.match();this.broadcastStats()}
+  private match(){while(this.waiting.length>=2){const first=this.waiting[0];let idx=this.waiting.findIndex((w,i)=>i>0&&w.country.code!==first.country.code);if(idx<0)idx=1;const second=this.waiting[idx];this.waiting.splice(idx,1);this.waiting.shift();if(!this.io.sockets.sockets.has(first.socketId)||!this.io.sockets.sockets.has(second.socketId))continue;this.create(first,second)}}
+  private create(a:Waiting,b:Waiting){const id=`room-${Date.now().toString(36)}-${++this.roomNo}`,seed=(Date.now()^this.roomNo*2654435761)>>>0,maze=generateMaze(seed);const countries:[Country,Country]=[a.country,b.country];const state:MatchState={roomId:id,role:'guide',phase:'intro',maze,position:maze.start,introEndsAt:Date.now()+3500,countries,distanceKm:distanceKm(...countries),finalMessages:{}};const room:Room={id,players:{guide:{socketId:a.socketId,country:a.country},runner:{socketId:b.socketId,country:b.country}},state,lastMove:0,lastSignal:0};this.rooms.set(id,room);for(const role of ['guide','runner'] as Role[]){const s=this.io.sockets.sockets.get(room.players[role].socketId);if(s){s.join(id);this.socketRooms.set(s.id,id);s.emit('matched',{...state,role})}}setTimeout(()=>{const r=this.rooms.get(id);if(r&&r.state.phase==='intro'){r.state.phase='playing';this.emitState(r)}},Math.max(0,state.introEndsAt-Date.now()));}
+  private roomFor(socket:GameSocket){const id=this.socketRooms.get(socket.id);return id?this.rooms.get(id):undefined}
+  private role(room:Room,id:string):Role|undefined{return room.players.guide.socketId===id?'guide':room.players.runner.socketId===id?'runner':undefined}
+  private emitState(room:Room){for(const role of ['guide','runner'] as Role[]){this.io.to(room.players[role].socketId).emit('state',{...room.state,role})}}
+  private move(socket:GameSocket,p:{direction:unknown}){const r=this.roomFor(socket);if(!r||this.role(r,socket.id)!=='runner'||r.state.phase!=='playing'||!isDirection(p?.direction))return;const now=Date.now();if(now-r.lastMove<65)return;r.lastMove=now;const next=movePosition(r.state.maze,r.state.position,p.direction);if(next===r.state.position)return;r.state.position=next;if(next.x===r.state.maze.exit.x&&next.y===r.state.maze.exit.y){r.state.phase='success';this.completedToday++;this.broadcastStats()}this.emitState(r)}
+  private signal(socket:GameSocket,p:{direction:unknown}){const r=this.roomFor(socket);if(!r||this.role(r,socket.id)!=='guide'||r.state.phase!=='playing'||!isDirection(p?.direction))return;const now=Date.now();if(now-r.lastSignal<400)return;r.lastSignal=now;this.io.to(r.players.runner.socketId).emit('signal',{direction:p.direction,at:now})}
+  private final(socket:GameSocket,p:{message:unknown}){const r=this.roomFor(socket),role=r&&this.role(r,socket.id);if(!r||!role||r.state.phase!=='success'||r.state.finalMessages[role]||!isSafeMessage(p?.message))return;r.state.finalMessages[role]=p.message;this.emitState(r)}
+  private replay(socket:GameSocket){const r=this.roomFor(socket),role=r&&this.role(r,socket.id);const country=role&&r?r.players[role].country:this.socketCountries.get(socket.id);if(!country)return;if(r)this.removeRoom(r);if(socket.connected)this.join(socket,{countryCode:country.code})}
+  private leaveQueue(id:string){this.waiting=this.waiting.filter(w=>w.socketId!==id);this.broadcastStats()}
+  private disconnect(socket:GameSocket){this.leaveQueue(socket.id);const r=this.roomFor(socket);this.socketCountries.delete(socket.id);if(!r)return;const other=this.role(r,socket.id)==='guide'?r.players.runner.socketId:r.players.guide.socketId;this.io.to(other).emit('peerDisconnected');this.socketRooms.delete(socket.id);this.socketRooms.delete(other);this.rooms.delete(r.id)}
+  private removeRoom(r:Room){for(const role of ['guide','runner'] as Role[]){this.socketRooms.delete(r.players[role].socketId);this.io.sockets.sockets.get(r.players[role].socketId)?.leave(r.id)}this.rooms.delete(r.id)}
+  close(){return this.io.close()}
+}

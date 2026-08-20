@@ -1,0 +1,158 @@
+{
+  "console": [
+    {
+      "name": "desktop-one",
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "name": "desktop-one",
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "name": "desktop-one",
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "name": "desktop-two",
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "name": "desktop-two",
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "name": "desktop-two",
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "name": "desktop-replay",
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "name": "desktop-replay",
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "name": "desktop-replay",
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "name": "mobile-one",
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "name": "mobile-one",
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "name": "mobile-one",
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "name": "mobile-two",
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "name": "mobile-two",
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "name": "mobile-two",
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    },
+    {
+      "name": "mobile-replay",
+      "type": "debug",
+      "text": "[vite] connecting..."
+    },
+    {
+      "name": "mobile-replay",
+      "type": "debug",
+      "text": "[vite] connected."
+    },
+    {
+      "name": "mobile-replay",
+      "type": "info",
+      "text": "%cDownload the React DevTools for a better development experience: https://reactjs.org/link/react-devtools font-weight:bold"
+    }
+  ],
+  "pageErrors": [],
+  "failedRequests": [],
+  "webSockets": [
+    {
+      "name": "desktop-one",
+      "url": "ws://127.0.0.1:24678/?token=<redacted>",
+      "closed": false
+    },
+    {
+      "name": "desktop-one",
+      "url": "ws://127.0.0.1:3000/socket.io/?EIO=4&transport=websocket&sid=7LKLzO-O1q5KFscLAAAW",
+      "closed": false
+    },
+    {
+      "name": "desktop-two",
+      "url": "ws://127.0.0.1:24678/?token=<redacted>",
+      "closed": false
+    },
+    {
+      "name": "desktop-two",
+      "url": "ws://127.0.0.1:3000/socket.io/?EIO=4&transport=websocket&sid=h3srEul8WK_3X8kvAAAY",
+      "closed": false
+    },
+    {
+      "name": "desktop-replay",
+      "url": "ws://127.0.0.1:24678/?token=<redacted>",
+      "closed": false
+    },
+    {
+      "name": "desktop-replay",
+      "url": "ws://127.0.0.1:3000/socket.io/?EIO=4&transport=websocket&sid=06ay8cHDMmO0ZsQkAAAa",
+      "closed": false
+    },
+    {
+      "name": "mobile-one",
+      "url": "ws://127.0.0.1:24678/?token=<redacted>",
+      "closed": false
+    },
+    {
+      "name": "mobile-one",
+      "url": "ws://127.0.0.1:3000/socket.io/?EIO=4&transport=websocket&sid=vGeRPqUpVUmaGgs5AAAc",
+      "closed": false
+    },
+    {
+      "name": "mobile-two",
+      "url": "ws://127.0.0.1:24678/?token=<redacted>",
+      "closed": false
+    },
+    {
+      "name": "mobile-two",
+      "url": "ws://127.0.0.1:3000/socket.io/?EIO=4&transport=websocket&sid=ohsrUUbc9qmtE_K3AAAe",
+      "closed": false
+    },
+    {
+      "name": "mobile-replay",
+      "url": "ws://127.0.0.1:24678/?token=<redacted>",
+      "closed": false
+    },
+    {
+      "name": "mobile-replay",
+      "url": "ws://127.0.0.1:3000/socket.io/?EIO=4&transport=websocket&sid=qVt-36hnJlEHWwg6AAAg",
+      "closed": false
+    }
+  ]
+}
